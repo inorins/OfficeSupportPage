@@ -11,7 +11,7 @@ import { useApiMode } from '@/context/ApiModeContext';
 import type { Priority, TicketStatus, Ticket } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 
-const CURRENT_USER_ASSIGNEE = 'Sarah K.';
+const CURRENT_USER_ASSIGNEE = 'Gaurav Shrestha';
 
 const SLA_HOURS: Record<Priority, number> = {
   Critical: 4,

@@ -20,7 +20,7 @@ interface TicketDetailViewProps {
   onBack: () => void;
 }
 
-const TEAM_MEMBERS = ['Sarah K.', 'David O.', 'Mary W.', 'Unassigned'];
+const TEAM_MEMBERS = ['Gaurav Shrestha', 'Sujan Prajapati', 'Maheshwor Prajapati', 'Ramendra Pradhananga', 'Unassigned'];
 
 const STATUS_OPTIONS: TicketStatus[] = ['Open', 'In Progress', 'Pending Client', 'Resolved', 'Closed'];
 
