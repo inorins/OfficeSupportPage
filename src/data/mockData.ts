@@ -2,9 +2,16 @@ export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type TicketStatus = 'Open' | 'In Progress' | 'Pending Client' | 'Resolved' | 'Closed';
 export type Environment = 'UAT' | 'Production';
 
+export interface AttachmentMetadata {
+  name: string;
+  size: number;
+  type: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
+  bankName?: string;
   system: string;
   module: string;
   form: string;
@@ -16,6 +23,7 @@ export interface Ticket {
   reporterEmail: string;
   assignee?: string;
   description: string;
+  attachments?: AttachmentMetadata[];
   createdAt: string;
 }
 

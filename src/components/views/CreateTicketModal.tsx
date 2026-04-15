@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,19 +20,59 @@ interface CreateTicketModalProps {
 export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
+  const [bankName, setBankName] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('');
   const [system, setSystem] = useState('');
   const [module, setModule] = useState('');
   const [form, setForm] = useState('');
   const [isProduction, setIsProduction] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const modules = system ? Object.keys(systemModules[system] || {}) : [];
   const forms = system && module ? systemModules[system]?.[module] || [] : [];
+
+  const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+  const ACCEPTED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'application/pdf'];
+
+  const addFiles = (files: FileList | null) => {
+    if (!files?.length) return;
+    const newFiles = Array.from(files);
+    const invalid = newFiles.filter(
+      (file) => file.size > MAX_ATTACHMENT_SIZE || !ACCEPTED_ATTACHMENT_TYPES.includes(file.type),
+    );
+
+    if (invalid.length > 0) {
+      setUploadError('Only PNG, JPG, and PDF files under 10MB are allowed.');
+      return;
+    }
+
+    setUploadError('');
+    setAttachments((current) => {
+      const merged = [...current, ...newFiles];
+      return merged.slice(0, 5);
+    });
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    addFiles(event.dataTransfer.files);
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    addFiles(event.target.files);
+    event.target.value = '';
+  };
+
+  const removeAttachment = (fileName: string) => {
+    setAttachments((current) => current.filter((file) => file.name !== fileName));
+  };
 
   const handleSystemChange = (val: string) => {
     setSystem(val);
@@ -48,12 +88,15 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
   const reset = () => {
     setStep(1);
     setTitle('');
+    setBankName('');
     setDescription('');
     setPriority('');
     setSystem('');
     setModule('');
     setForm('');
     setIsProduction(false);
+    setAttachments([]);
+    setUploadError('');
     setIsSubmitting(false);
   };
 
@@ -62,6 +105,7 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
     try {
       await api.createTicket({
         title,
+        bankName,
         description,
         priority: priority as any,
         system,
@@ -70,6 +114,11 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
         environment: isProduction ? 'Production' : 'UAT',
         reporter: user?.name,
         reporterEmail: user?.email,
+        attachments: attachments.map((file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+        })),
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['tickets'] }),
@@ -115,6 +164,21 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Bank</Label>
+              <Select value={bankName} onValueChange={setBankName}>
+                  <SelectTrigger><SelectValue placeholder="Select bank" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Guheshwori">Guheshwori</SelectItem>
+                    <SelectItem value="Reliance">Reliance</SelectItem>
+                    <SelectItem value="Progressive">Progressive</SelectItem>
+                    <SelectItem value="Ganapati">Ganapati</SelectItem>
+                    <SelectItem value="Goodwill">Goodwill</SelectItem>
+                    <SelectItem value="Shree Finance">Shree Finance</SelectItem>
+                  </SelectContent>
+                </Select>
+              <p className="text-xs text-muted-foreground">Use this field when creating a ticket on behalf of another bank.</p>
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
@@ -194,19 +258,52 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
         {step === 3 && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Attach screenshots or relevant files to help diagnose the issue.</p>
-            <div className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 bg-surface hover:border-primary/40 transition-colors cursor-pointer">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".png,.jpg,.jpeg,.pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <div
+              className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center gap-3 bg-surface hover:border-primary/40 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={handleDrop}
+            >
               <Upload className="h-10 w-10 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">Drop files here or click to browse</p>
               <p className="text-xs text-muted-foreground">PNG, JPG, PDF up to 10MB</p>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-surface rounded-md border border-border">
-              <FileText className="h-5 w-5 text-primary" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">error_screenshot.png</p>
-                <p className="text-xs text-muted-foreground">245 KB</p>
+            {uploadError ? (
+              <p className="text-xs text-destructive">{uploadError}</p>
+            ) : null}
+            {attachments.length > 0 ? (
+              <div className="space-y-2">
+                {attachments.map((file) => (
+                  <div key={file.name} className="flex items-center gap-3 p-3 bg-surface rounded-md border border-border">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline"
+                      onClick={() => removeAttachment(file.name)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button className="text-xs text-primary hover:underline">Remove</button>
-            </div>
+            ) : (
+              <div className="flex items-center gap-3 p-3 bg-surface rounded-md border border-border">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No attachments selected yet.</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Submitting will call <span className="font-mono">POST /api/tickets</span>
             </p>

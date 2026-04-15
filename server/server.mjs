@@ -214,6 +214,7 @@ app.post("/api/tickets", async (req, res, next) => {
     const payload = req.body ?? {};
 
     const title = String(payload.title ?? "").trim();
+    const bankName = String(payload.bankName ?? "").trim();
     const system = String(payload.system ?? "").trim();
     const module = String(payload.module ?? "").trim();
     const form = String(payload.form ?? "").trim();
@@ -225,11 +226,17 @@ app.post("/api/tickets", async (req, res, next) => {
 
     const priority = PRIORITIES.has(payload.priority) ? payload.priority : "Medium";
     const environment = payload.environment === "Production" ? "Production" : "UAT";
+    const attachments = Array.isArray(payload.attachments)
+      ? payload.attachments.filter(
+          (item) => item && typeof item.name === "string" && typeof item.size === "number"
+        )
+      : [];
 
     const tickets = await loadTickets();
     const ticket = {
       id: nextTicketId(tickets),
       title,
+      bankName: bankName || undefined,
       system,
       module,
       form,
@@ -240,6 +247,7 @@ app.post("/api/tickets", async (req, res, next) => {
       reporterEmail: String(payload.reporterEmail ?? "unknown@inorins.local"),
       assignee: "",
       description: String(payload.description ?? ""),
+      attachments,
       createdAt: now.toISOString().slice(0, 10),
       updatedAt: now.toISOString(),
     };

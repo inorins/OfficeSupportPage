@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { Upload, FileText, Send, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ const STEPS = ['Issue Details', 'System & Module', 'Attachments'];
 export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
@@ -33,6 +34,8 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
   const [module, setModule] = useState('');
   const [form, setForm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState('');
 
   const modules = system ? Object.keys(systemModules[system] || {}) : [];
   const forms = system && module ? systemModules[system]?.[module] || [] : [];
@@ -42,6 +45,55 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
 
   const canNextStep1 = title.trim().length > 0 && priority.length > 0;
   const canNextStep2 = system.length > 0 && module.length > 0 && form.length > 0;
+  const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+  const ACCEPTED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'application/pdf', 'text/plain'];
+
+  const resetForm = () => {
+    setStep(1);
+    setTitle('');
+    setDescription('');
+    setPriority('');
+    setIsProduction(false);
+    setSystem('');
+    setModule('');
+    setForm('');
+    setAttachments([]);
+    setUploadError('');
+  };
+
+  const addFiles = (files: FileList | null) => {
+    if (!files?.length) return;
+    const newFiles = Array.from(files);
+    const invalid = newFiles.filter((file) => {
+      const isLog = file.name.toLowerCase().endsWith('.log');
+      return file.size > MAX_ATTACHMENT_SIZE || (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type) && !isLog);
+    });
+
+    if (invalid.length > 0) {
+      setUploadError('Only PNG, JPG, PDF, and LOG files under 10MB are allowed.');
+      return;
+    }
+
+    setUploadError('');
+    setAttachments((current) => {
+      const merged = [...current, ...newFiles];
+      return merged.slice(0, 5);
+    });
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    addFiles(event.dataTransfer.files);
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    addFiles(event.target.files);
+    event.target.value = '';
+  };
+
+  const removeAttachment = (fileName: string) => {
+    setAttachments((current) => current.filter((file) => file.name !== fileName));
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -56,17 +108,21 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
         environment: isProduction ? 'Production' : 'UAT',
         reporter: user?.name,
         reporterEmail: user?.email,
+        attachments: attachments.map((file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+        })),
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['tickets'] }),
         queryClient.invalidateQueries({ queryKey: ['stats'] }),
       ]);
+      setSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
-    setSubmitted(true);
   };
-
   if (submitted) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -222,22 +278,54 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
       {/* Step 3 */}
       {step === 3 && (
         <div className="space-y-4 bg-card rounded-lg border border-border p-5">
-          <p className="text-sm text-muted-foreground">
-            Attach any screenshots, logs, or files that will help diagnose the issue.
-          </p>
-          <div className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center gap-3 bg-surface hover:border-primary/40 transition-colors cursor-pointer">
+          <p className="text-sm text-muted-foreground">Attach screenshots or relevant files to help diagnose the issue.</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".png,.jpg,.jpeg,.pdf,.log"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          <div
+            className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center gap-3 bg-surface hover:border-primary/40 transition-colors cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={handleDrop}
+          >
             <Upload className="h-10 w-10 text-muted-foreground" />
             <p className="text-sm font-medium text-foreground">Drop files here or click to browse</p>
             <p className="text-xs text-muted-foreground">PNG, JPG, PDF, LOG up to 10MB each</p>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-surface rounded-md border border-border">
-            <FileText className="h-5 w-5 text-primary" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">error_screenshot.png</p>
-              <p className="text-xs text-muted-foreground">245 KB</p>
+
+          {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
+
+          {attachments.length > 0 ? (
+            <div className="space-y-2">
+              {attachments.map((file) => (
+                <div key={file.name} className="flex items-center gap-3 p-3 bg-surface rounded-md border border-border">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline"
+                    onClick={() => removeAttachment(file.name)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
             </div>
-            <button className="text-xs text-primary hover:underline">Remove</button>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3 p-3 bg-surface rounded-md border border-border">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No attachments selected yet.</p>
+            </div>
+          )}
 
           {/* Summary */}
           <div className="rounded-lg bg-surface border border-border p-4 space-y-1.5 text-sm">

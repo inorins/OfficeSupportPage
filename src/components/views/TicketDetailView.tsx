@@ -209,10 +209,21 @@ export function TicketDetailView({ ticketId, onBack }: TicketDetailViewProps) {
           </Section>
 
           <Section title="Attachments">
-            <div className="flex items-center gap-2 p-2.5 bg-card rounded-md border border-border">
-              <Paperclip className="h-4 w-4 text-primary" />
-              <span className="text-sm text-foreground">error_screenshot.png</span>
-            </div>
+            {ticket.attachments?.length ? (
+              <div className="space-y-2">
+                {ticket.attachments.map((attachment) => (
+                  <div key={attachment.name} className="flex items-center gap-2 p-2.5 bg-card rounded-md border border-border">
+                    <Paperclip className="h-4 w-4 text-primary" />
+                    <div className="min-w-0">
+                      <p className="text-sm text-foreground truncate">{attachment.name}</p>
+                      <p className="text-xs text-muted-foreground">{(attachment.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No attachments added.</p>
+            )}
           </Section>
         </div>
 
