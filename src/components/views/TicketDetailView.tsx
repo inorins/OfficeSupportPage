@@ -32,6 +32,12 @@ const priorityStyles: Record<Priority, string> = {
   Low: 'bg-muted text-muted-foreground border-border',
 };
 
+const requestTypeStyles: Record<'Issue' | 'Add Form' | 'Add Report', string> = {
+  Issue: 'bg-warning/10 text-warning border-warning/20',
+  'Add Form': 'bg-info/10 text-info border-info/20',
+  'Add Report': 'bg-primary/10 text-primary border-primary/20',
+};
+
 const statusStyles: Record<TicketStatus, string> = {
   Open: 'bg-primary/10 text-primary border-primary/20',
   'In Progress': 'bg-info/10 text-info border-info/20',
@@ -71,6 +77,7 @@ export function TicketDetailView({ ticketId, onBack }: TicketDetailViewProps) {
 
   const displayStatus = (currentStatus || ticket?.status) as TicketStatus;
   const displayAssignee = currentAssignee || ticket?.assignee || 'Unassigned';
+  const displayRequestType = (ticket?.requestType ?? 'Issue') as 'Issue' | 'Add Form' | 'Add Report';
 
   const handleStatusChange = async (status: string) => {
     setCurrentStatus(status as TicketStatus);
@@ -157,6 +164,7 @@ export function TicketDetailView({ ticketId, onBack }: TicketDetailViewProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="font-mono text-sm font-bold text-secondary">{ticket.id}</span>
+            <Badge className={requestTypeStyles[displayRequestType]}>{displayRequestType}</Badge>
             <Badge className={priorityStyles[ticket.priority]}>{ticket.priority}</Badge>
             <Badge className={statusStyles[displayStatus]}>{displayStatus}</Badge>
             {isUpdating && (
@@ -187,9 +195,10 @@ export function TicketDetailView({ ticketId, onBack }: TicketDetailViewProps) {
             <DetailRow icon={Tag} label="System" value={ticket.system} />
             <DetailRow icon={Tag} label="Bank" value={deriveBankName(ticket.bankName, ticket.reporterEmail)} />
             <DetailRow icon={Tag} label="Module" value={ticket.module} />
+            {ticket.moduleDetails ? <DetailRow icon={Tag} label="Module Notes" value={ticket.moduleDetails} /> : null}
             <DetailRow icon={Tag} label="Form" value={ticket.form} />
-            <DetailRow icon={Monitor} label="Environment" value={ticket.environment} highlight={ticket.environment === 'Production'} />
-            <DetailRow icon={Clock} label="Created" value={ticket.createdAt} />
+            <DetailRow icon={Tag} label="Request Type" value={displayRequestType} />
+            {ticket.requestedDelivery ? <DetailRow icon={Tag} label="Delivery" value={ticket.requestedDelivery} /> : null}
           </Section>
 
           {/* Editable Status */}

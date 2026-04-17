@@ -84,7 +84,7 @@ export function ClientPortal() {
         <ClientHeader onNewTicket={() => navigate('/client/tickets/new')} />
         <main className="flex-1 min-h-0 overflow-auto">
           <Routes>
-            <Route path="tickets" element={<ClientTicketListView onViewTicket={handleViewTicket} />} />
+            <Route path="tickets" element={<ClientTicketListView onViewTicket={handleViewTicket} onNewRequest={() => navigate('/client/tickets/new')} />} />
             <Route path="tickets/new" element={<ClientNewTicketView onSuccess={() => navigate('/client/tickets')} />} />
             <Route path="tickets/:ticketId" element={<ClientTicketDetailRoute />} />
             <Route path="faq" element={<FaqView />} />

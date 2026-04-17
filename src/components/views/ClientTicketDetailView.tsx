@@ -104,9 +104,12 @@ export function ClientTicketDetailView({ ticketId, onBack }: ClientTicketDetailV
           <Section title="Details">
             <DetailRow icon={Tag} label="System" value={ticket.system} />
             <DetailRow icon={Tag} label="Module" value={ticket.module} />
+            {ticket.moduleDetails ? <DetailRow icon={Tag} label="Module Notes" value={ticket.moduleDetails} /> : null}
             <DetailRow icon={Monitor} label="Environment" value={ticket.environment} highlight={ticket.environment === 'Production'} />
             <DetailRow icon={Clock} label="Created" value={ticket.createdAt} />
             <DetailRow icon={User} label="Assignee" value={ticket.assignee || 'Awaiting assignment'} />
+            {ticket?.requestType ? <DetailRow icon={Tag} label="Request Type" value={ticket?.requestType} /> : null}
+            {ticket?.requestedDelivery ? <DetailRow icon={Tag} label="Delivery" value={ticket?.requestedDelivery} /> : null}
           </Section>
 
           <Section title="Description">

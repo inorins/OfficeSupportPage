@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { AlertTriangle, Clock, TicketCheck, ArrowRight, FileText } from 'lucide-react';
 import { useTickets } from '@/hooks/useTicketsData';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface ClientTicketListViewProps {
   onViewTicket: (id: string) => void;
+  onNewRequest: () => void;
 }
 
 function PriorityBadge({ priority }: { priority: Priority }) {
@@ -57,7 +59,7 @@ function TicketRow({ ticket, onClick }: { ticket: Ticket; onClick: () => void })
   );
 }
 
-export function ClientTicketListView({ onViewTicket }: ClientTicketListViewProps) {
+export function ClientTicketListView({ onViewTicket, onNewRequest }: ClientTicketListViewProps) {
   const { user } = useAuth();
   const { tickets, isLoading } = useTickets();
 
@@ -86,12 +88,8 @@ export function ClientTicketListView({ onViewTicket }: ClientTicketListViewProps
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">My Tickets</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          All support tickets raised by {user?.bankName}
-        </p>
-      </div>
+      
+
 
       {/* KPI strip */}
       <div className="grid grid-cols-3 gap-4">

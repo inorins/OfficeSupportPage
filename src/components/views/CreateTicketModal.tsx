@@ -26,6 +26,7 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
   const [title, setTitle] = useState('');
   const [bankName, setBankName] = useState('');
   const [description, setDescription] = useState('');
+  const [requestType, setRequestType] = useState<'Issue' | 'Add Form' | 'Add Report'>('Issue');
   const [priority, setPriority] = useState('');
   const [system, setSystem] = useState('');
   const [module, setModule] = useState('');
@@ -39,17 +40,29 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
   const forms = system && module ? systemModules[system]?.[module] || [] : [];
 
   const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
-  const ACCEPTED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'application/pdf'];
+  const ACCEPTED_ATTACHMENT_TYPES = [
+    'image/png',
+    'image/jpeg',
+    'application/pdf',
+    'text/csv',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+  ];
 
   const addFiles = (files: FileList | null) => {
     if (!files?.length) return;
     const newFiles = Array.from(files);
-    const invalid = newFiles.filter(
-      (file) => file.size > MAX_ATTACHMENT_SIZE || !ACCEPTED_ATTACHMENT_TYPES.includes(file.type),
-    );
+    const invalid = newFiles.filter((file) => {
+      const name = file.name.toLowerCase();
+      const isAllowedByExtension = ['.csv', '.xls', '.xlsx'].some((ext) => name.endsWith(ext));
+      return (
+        file.size > MAX_ATTACHMENT_SIZE ||
+        (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type) && !isAllowedByExtension)
+      );
+    });
 
     if (invalid.length > 0) {
-      setUploadError('Only PNG, JPG, and PDF files under 10MB are allowed.');
+      setUploadError('Only PNG, JPG, PDF, CSV, XLS, and XLSX files under 10MB are allowed.');
       return;
     }
 
@@ -104,6 +117,7 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
     setTitle('');
     setBankName('');
     setDescription('');
+    setRequestType('Issue');
     setPriority('');
     setSystem('');
     setModule('');
@@ -130,6 +144,7 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
         title,
         bankName,
         description,
+        requestType,
         priority: priority as any,
         system,
         module,
@@ -210,6 +225,17 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>Request Type</Label>
+                <Select value={requestType} onValueChange={(value) => setRequestType(value as 'Issue' | 'Add Form' | 'Add Report')}>
+                  <SelectTrigger><SelectValue placeholder="Select request type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Issue">Issue / Bug</SelectItem>
+                    <SelectItem value="Add Form">New Form Request</SelectItem>
+                    <SelectItem value="Add Report">New Report Request</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>Priority</Label>
                 <Select value={priority} onValueChange={setPriority}>
                   <SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
@@ -281,7 +307,7 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".png,.jpg,.jpeg,.pdf"
+              accept=".png,.jpg,.jpeg,.pdf,.csv,.xls,.xlsx"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -293,7 +319,7 @@ export function CreateTicketModal({ open, onClose }: CreateTicketModalProps) {
             >
               <Upload className="h-10 w-10 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">Drop files here or click to browse</p>
-              <p className="text-xs text-muted-foreground">PNG, JPG, PDF up to 10MB</p>
+              <p className="text-xs text-muted-foreground">PNG, JPG, PDF, CSV, XLS, XLSX up to 10MB</p>
             </div>
             {uploadError ? (
               <p className="text-xs text-destructive">{uploadError}</p>
