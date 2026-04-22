@@ -18,7 +18,7 @@ export function AppSidebar({ activeView, onNavigate }: AppSidebarProps) {
   const { logout } = useAuth();
 
   return (
-    <aside className="w-64 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border">
+    <aside className="w-64 h-screen sticky top-0 bg-sidebar flex flex-col border-r border-sidebar-border">
       {/* Brand */}
       <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
         <Shield className="h-7 w-7 text-sidebar-primary mr-2.5 shrink-0" />

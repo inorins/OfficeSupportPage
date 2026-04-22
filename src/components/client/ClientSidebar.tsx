@@ -18,7 +18,7 @@ export function ClientSidebar({ activeView, onNavigate, openTicketCount }: Clien
   const { user } = useAuth();
 
   return (
-    <aside className="w-60 min-h-screen bg-sidebar flex flex-col border-r border-sidebar-border">
+    <aside className="w-60 h-screen sticky top-0 bg-sidebar flex flex-col border-r border-sidebar-border">
       {/* Bank identity */}
       <div className="h-16 flex items-center px-5 border-b border-sidebar-border gap-3">
         <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center shrink-0">

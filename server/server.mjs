@@ -64,6 +64,7 @@ function withLastUpdated(ticket) {
   const updatedAt = ticket.updatedAt ?? ticket.createdAt;
   return {
     ...ticket,
+    requestType: ticket.requestType ?? 'Issue',
     lastUpdated: toRelativeTime(updatedAt),
   };
 }
@@ -237,6 +238,9 @@ app.post("/api/tickets", async (req, res, next) => {
 
     const priority = PRIORITIES.has(payload.priority) ? payload.priority : "Medium";
     const environment = payload.environment === "Production" ? "Production" : "UAT";
+    const requestType = ['Issue', 'Add Form', 'Add Report'].includes(payload.requestType) ? payload.requestType : 'Issue';
+    const requestedDelivery = typeof payload.requestedDelivery === 'string' ? payload.requestedDelivery : '';
+    const moduleDetails = typeof payload.moduleDetails === 'string' ? payload.moduleDetails : '';
     const inferredBankName = await deriveBankNameFromEmail(reporterEmail);
     const bankName = requestedBankName || inferredBankName || '';
 
@@ -281,7 +285,10 @@ app.post("/api/tickets", async (req, res, next) => {
       bankName: bankName || undefined,
       system,
       module,
+      moduleDetails: moduleDetails || undefined,
       form,
+      requestType,
+      requestedDelivery: requestedDelivery || undefined,
       priority,
       status: "Open",
       environment,

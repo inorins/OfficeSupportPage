@@ -74,17 +74,17 @@ export function ClientPortal() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-surface">
+    <div className="flex h-screen w-full overflow-hidden bg-surface">
       <ClientSidebar
         activeView={activeView}
         onNavigate={handleNavigate}
         openTicketCount={openCount}
       />
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col h-screen">
         <ClientHeader onNewTicket={() => navigate('/client/tickets/new')} />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 min-h-0 overflow-auto">
           <Routes>
-            <Route path="tickets" element={<ClientTicketListView onViewTicket={handleViewTicket} />} />
+            <Route path="tickets" element={<ClientTicketListView onViewTicket={handleViewTicket} onNewRequest={() => navigate('/client/tickets/new')} />} />
             <Route path="tickets/new" element={<ClientNewTicketView onSuccess={() => navigate('/client/tickets')} />} />
             <Route path="tickets/:ticketId" element={<ClientTicketDetailRoute />} />
             <Route path="faq" element={<FaqView />} />

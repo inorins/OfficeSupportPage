@@ -100,13 +100,16 @@ export function ClientTicketDetailView({ ticketId, onBack }: ClientTicketDetailV
       {/* Body */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Panel */}
-        <div className="w-72 border-r border-border bg-surface p-5 shrink-0 space-y-5 scrollbar-thin">
+        <div className="w-72 border-r border-border bg-surface p-5 shrink-0 space-y-5 overflow-y-auto min-h-0 scrollbar-thin">
           <Section title="Details">
             <DetailRow icon={Tag} label="System" value={ticket.system} />
             <DetailRow icon={Tag} label="Module" value={ticket.module} />
+            {ticket.moduleDetails ? <DetailRow icon={Tag} label="Module Notes" value={ticket.moduleDetails} /> : null}
             <DetailRow icon={Monitor} label="Environment" value={ticket.environment} highlight={ticket.environment === 'Production'} />
             <DetailRow icon={Clock} label="Created" value={ticket.createdAt} />
             <DetailRow icon={User} label="Assignee" value={ticket.assignee || 'Awaiting assignment'} />
+            {ticket?.requestType ? <DetailRow icon={Tag} label="Request Type" value={ticket?.requestType} /> : null}
+            {ticket?.requestedDelivery ? <DetailRow icon={Tag} label="Delivery" value={ticket?.requestedDelivery} /> : null}
           </Section>
 
           <Section title="Description">

@@ -26,12 +26,15 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
 
+  const [requestType, setRequestType] = useState<'Issue' | 'Add Form' | 'Add Report'>('Issue');
+  const [requestedDelivery, setRequestedDelivery] = useState('Flexible');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('');
   const [isProduction, setIsProduction] = useState(false);
   const [system, setSystem] = useState('');
   const [module, setModule] = useState('');
+  const [moduleDetails, setModuleDetails] = useState('');
   const [form, setForm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -43,19 +46,30 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
   const handleSystemChange = (v: string) => { setSystem(v); setModule(''); setForm(''); };
   const handleModuleChange = (v: string) => { setModule(v); setForm(''); };
 
-  const canNextStep1 = title.trim().length > 0 && priority.length > 0;
+  const canNextStep1 = requestType.length > 0 && title.trim().length > 0 && (requestType === 'Issue' ? priority.length > 0 : true);
   const canNextStep2 = system.length > 0 && module.length > 0 && form.length > 0;
   const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
-  const ACCEPTED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'application/pdf', 'text/plain'];
+  const ACCEPTED_ATTACHMENT_TYPES = [
+    'image/png',
+    'image/jpeg',
+    'application/pdf',
+    'text/plain',
+    'text/csv',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+  ];
 
   const resetForm = () => {
     setStep(1);
+    setRequestType('Issue');
+    setRequestedDelivery('Flexible');
     setTitle('');
     setDescription('');
     setPriority('');
     setIsProduction(false);
     setSystem('');
     setModule('');
+    setModuleDetails('');
     setForm('');
     setAttachments([]);
     setUploadError('');
@@ -65,12 +79,16 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
     if (!files?.length) return;
     const newFiles = Array.from(files);
     const invalid = newFiles.filter((file) => {
-      const isLog = file.name.toLowerCase().endsWith('.log');
-      return file.size > MAX_ATTACHMENT_SIZE || (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type) && !isLog);
+      const name = file.name.toLowerCase();
+      const isAllowedByExtension = ['.log', '.csv', '.xls', '.xlsx'].some((ext) => name.endsWith(ext));
+      return (
+        file.size > MAX_ATTACHMENT_SIZE ||
+        (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type) && !isAllowedByExtension)
+      );
     });
 
     if (invalid.length > 0) {
-      setUploadError('Only PNG, JPG, PDF, and LOG files under 10MB are allowed.');
+      setUploadError('Only PNG, JPG, PDF, CSV, XLS, XLSX, and LOG files under 10MB are allowed.');
       return;
     }
 
@@ -128,7 +146,10 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
         priority: priority as any,
         system,
         module,
+        moduleDetails,
         form,
+        requestType,
+        requestedDelivery,
         environment: isProduction ? 'Production' : 'UAT',
         reporter: user?.name,
         reporterEmail: user?.email,
@@ -158,9 +179,11 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
           <Button onClick={() => {
             setSubmitted(false);
             setStep(1);
+            setRequestType('Issue');
+            setRequestedDelivery('Flexible');
             setTitle(''); setDescription(''); setPriority('');
-            setSystem(''); setModule(''); setForm('');
             setIsProduction(false);
+            setSystem(''); setModule(''); setModuleDetails(''); setForm('');
           }}>
             Submit Another
           </Button>
@@ -216,35 +239,73 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
       {step === 1 && (
         <div className="space-y-4 bg-card rounded-lg border border-border p-5">
           <div className="space-y-1.5">
+            <Label>Request Type <span className="text-primary">*</span></Label>
+            <Select value={requestType} onValueChange={(value) => setRequestType(value as 'Issue' | 'Add Form' | 'Add Report')}>
+              <SelectTrigger><SelectValue placeholder="Select request type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Issue">Issue / Bug</SelectItem>
+                <SelectItem value="Add Form">New Form Request</SelectItem>
+                <SelectItem value="Add Report">New Report Request</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label>Issue Title <span className="text-primary">*</span></Label>
             <Input
-              placeholder="Brief summary of the problem"
+              placeholder={
+                requestType === 'Add Form'
+                  ? 'Brief summary of the form request'
+                  : requestType === 'Add Report'
+                    ? 'Brief summary of the report request'
+                    : 'Brief summary of the problem'
+              }
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Description</Label>
+            <Label>{requestType === 'Add Form' ? 'Form Request Details' : requestType === 'Add Report' ? 'Report Request Details' : 'Description'}</Label>
             <Textarea
-              placeholder="Describe the issue in detail — steps to reproduce, error messages, affected users..."
+              placeholder={
+                requestType === 'Add Form'
+                  ? 'Explain what the new form should do, what fields are required, and any special rules or validations.'
+                  : requestType === 'Add Report'
+                    ? 'Explain what the report should include, filters, grouping, schedule, and who will use it.'
+                    : 'Describe the issue in detail — steps to reproduce, error messages, affected users...'
+              }
               rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Priority <span className="text-primary">*</span></Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Critical">Critical — System down</SelectItem>
-                  <SelectItem value="High">High — Major impact</SelectItem>
-                  <SelectItem value="Medium">Medium — Partial impact</SelectItem>
-                  <SelectItem value="Low">Low — Minor issue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {requestType === 'Issue' ? (
+              <div className="space-y-1.5">
+                <Label>Priority <span className="text-primary">*</span></Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Critical">Critical — System down</SelectItem>
+                    <SelectItem value="High">High — Major impact</SelectItem>
+                    <SelectItem value="Medium">Medium — Partial impact</SelectItem>
+                    <SelectItem value="Low">Low — Minor issue</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>Desired Delivery</Label>
+                <Select value={requestedDelivery} onValueChange={setRequestedDelivery}>
+                  <SelectTrigger><SelectValue placeholder="How fast do you want this?" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ASAP">ASAP (urgent)</SelectItem>
+                    <SelectItem value="Within 1 week">Within 1 week</SelectItem>
+                    <SelectItem value="Within 2 weeks">Within 2 weeks</SelectItem>
+                    <SelectItem value="Flexible">Flexible</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Environment</Label>
               <div className="flex items-center gap-3 h-10 px-3 bg-surface rounded-md border border-border">
@@ -261,7 +322,11 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
       {step === 2 && (
         <div className="space-y-4 bg-card rounded-lg border border-border p-5">
           <p className="text-sm text-muted-foreground">
-            Select the Inorins system, module, and form where the issue occurred.
+            {requestType === 'Add Form'
+              ? 'Choose the system, module, and form related to the new form request. If you do not know the exact module, leave it as Not sure and describe the area.'
+              : requestType === 'Add Report'
+                ? 'Choose the system, module, and report area related to the report request. If you do not know the exact module, leave it as Not sure and describe the area.'
+                : 'Select the Inorins system, module, and form where the issue occurred.'}
           </p>
           <div className="space-y-1.5">
             <Label>System <span className="text-primary">*</span></Label>
@@ -279,18 +344,29 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
             <Select value={module} onValueChange={handleModuleChange} disabled={!system}>
               <SelectTrigger><SelectValue placeholder={system ? 'Select module' : 'Select a system first'} /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="Not sure">Not sure / not mentioned yet</SelectItem>
                 {modules.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Form / Screen <span className="text-primary">*</span></Label>
-            <Select value={form} onValueChange={setForm} disabled={!module}>
-              <SelectTrigger><SelectValue placeholder={module ? 'Select form' : 'Select a module first'} /></SelectTrigger>
+            <Label>{requestType === 'Add Report' ? 'Report Type / Area' : 'Form / Screen'} <span className="text-primary">*</span></Label>
+            <Select value={form} onValueChange={setForm} disabled={!system}>
+              <SelectTrigger><SelectValue placeholder={system ? 'Select form or report area' : 'Select a system first'} /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="Not sure">Not sure / not mentioned yet</SelectItem>
                 {forms.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Module description</Label>
+            <Textarea
+              placeholder="If you don't know the exact module, describe the screen or area here."
+              rows={3}
+              value={moduleDetails}
+              onChange={(e) => setModuleDetails(e.target.value)}
+            />
           </div>
         </div>
       )}
@@ -303,7 +379,7 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".png,.jpg,.jpeg,.pdf,.log"
+            accept=".png,.jpg,.jpeg,.pdf,.log,.csv,.xls,.xlsx"
             className="hidden"
             onChange={handleFileChange}
           />
@@ -316,7 +392,7 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
           >
             <Upload className="h-10 w-10 text-muted-foreground" />
             <p className="text-sm font-medium text-foreground">Drop files here or click to browse</p>
-            <p className="text-xs text-muted-foreground">PNG, JPG, PDF, LOG up to 10MB each</p>
+            <p className="text-xs text-muted-foreground">PNG, JPG, PDF, LOG, CSV, XLS, XLSX up to 10MB each</p>
           </div>
 
           {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
@@ -350,8 +426,10 @@ export function ClientNewTicketView({ onSuccess }: ClientNewTicketViewProps) {
           {/* Summary */}
           <div className="rounded-lg bg-surface border border-border p-4 space-y-1.5 text-sm">
             <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground mb-2">Summary</p>
+            <div className="flex justify-between"><span className="text-muted-foreground">Request</span><span className="font-medium text-foreground truncate max-w-[60%]">{requestType}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Title</span><span className="font-medium text-foreground truncate max-w-[60%]">{title}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Priority</span><span className="font-medium text-foreground">{priority}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span className="font-medium text-foreground">{requestedDelivery}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">System</span><span className="font-medium text-foreground">{system} › {module} › {form}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Environment</span><span className="font-medium text-foreground">{isProduction ? 'Production' : 'UAT'}</span></div>
           </div>
