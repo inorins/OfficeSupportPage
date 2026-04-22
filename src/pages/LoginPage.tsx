@@ -159,9 +159,9 @@ export function LoginPage() {
               {isLoading ? 'Signing in…' : 'Sign In'}
             </Button>
           </form>
-
-          {/* Quick login section */}
-          <div className="mt-8">
+{/*Uncomment this when testing so you can get list of demo users */}
+          {/* Quick login section
+         <div className="mt-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 h-px bg-border" />
               <span className="text-xs text-muted-foreground font-medium">Demo Quick Login</span>
@@ -169,7 +169,7 @@ export function LoginPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Inorins Team */}
+              {/* Inorins Team *//*
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="h-3.5 w-3.5 text-secondary" />
@@ -182,7 +182,7 @@ export function LoginPage() {
                 </div>
               </div>
 
-              {/* Client Banks */}
+              {/* Client Banks *//*
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Building2 className="h-3.5 w-3.5 text-info" />
@@ -200,13 +200,14 @@ export function LoginPage() {
               All demo accounts use password: <span className="font-mono font-semibold">{DEMO_PASSWORD}</span>
             </p>
           </div>
+         */}
         </div>
       </div>
     </div>
   );
 }
 
-function QuickLoginCard({ user, onSelect }: { user: AuthUser; onSelect: (u: AuthUser) => void }) {
+ {/*function QuickLoginCard({ user, onSelect }: { user: AuthUser; onSelect: (u: AuthUser) => void }) {
   return (
     <button
       type="button"
@@ -233,4 +234,4 @@ function QuickLoginCard({ user, onSelect }: { user: AuthUser; onSelect: (u: Auth
       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
     </button>
   );
-}
+}*/}
