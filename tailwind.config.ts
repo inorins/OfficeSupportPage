@@ -74,6 +74,13 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      boxShadow: {
+        gmbf: "0px 2px 4px rgba(0, 0, 0, 0.25)",
+      },
+      screens: {
+        xs: "475px",
+        xxl: "1520px",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

@@ -8,6 +8,8 @@ import { LoginPage } from "@/pages/LoginPage";
 import { ClientPortal } from "@/pages/ClientPortal";
 import NotFound from "@/pages/NotFound";
 import Index from "./pages/Index.tsx";
+import HomePage from "./pages/HomePage.tsx";
+import ServicePage from "./pages/ServicePage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -82,7 +84,8 @@ function AppRoutes() {
         )}
       />
 
-      <Route path="/" element={<Navigate to={homePath} replace />} />
+      <Route path="/" element={user ? <Navigate to={homePath} replace /> : <HomePage />} />
+      <Route path="/service/:slug" element={<ServicePage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
