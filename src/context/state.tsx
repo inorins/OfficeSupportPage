@@ -6,7 +6,6 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-let newtop = false;
 
 interface AppWrapperProps {
   children: ReactNode;
@@ -16,16 +15,19 @@ export function AppWrapper({ children }: AppWrapperProps) {
   const [top, setTop] = useState(false);
 
   useEffect(() => {
-    // check scrolled index
-    document.addEventListener("scroll", () => {
-      const isTop = window.scrollY > 210;
-      // find window height
-      // const windowHeight = window.innerHeight;
-      if (isTop !== newtop) {
-        newtop = isTop;
-        setTop(isTop)
-      };
-    });
+    const handleScroll = () => {
+      const scrollThreshold = 100;
+      const isScrolled = window.scrollY > scrollThreshold;
+      setTop(isScrolled);
+    };
+    
+    // Handle initial state
+    handleScroll();
+    
+    // Listen to scroll
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const sharedState: AppContextType = { top, setTop };

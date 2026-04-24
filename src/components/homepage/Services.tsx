@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { data } from ".";
 import React from "react";
 
@@ -15,10 +15,11 @@ export default function Services(): JSX.Element {
             <div className="flex flex-col items-center bg-primary/80 shadow-gmbf rounded-md p-4 h-full pb-16">
               <h2 className="text-lg md:text-xl lg:text-2xl">{item?.name}</h2>
               <p className="text-center">{item?.description}</p>
-              <Link href={`/service/${item?.slug}`}>
-                <a className="absolute bottom-4 border bg-transparent hover:bg-[#2C3A47] hover:border-[#2C3A47] text-white px-3 py-1 text-center rounded-full shadow-sm shadow-primary transition-all duration-200">
-                  Learn more
-                </a>
+              <Link
+                to={`/service/${item?.slug}`}
+                className="absolute bottom-4 border bg-transparent hover:bg-[#2C3A47] hover:border-[#2C3A47] text-white px-3 py-1 text-center rounded-full shadow-sm shadow-primary transition-all duration-200"
+              >
+                Learn more
               </Link>
             </div>
           </div>

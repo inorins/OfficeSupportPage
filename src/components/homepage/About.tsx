@@ -53,10 +53,9 @@ export default function About(): JSX.Element {
             </figure>
           </div>
           <div className="w-28 xl:w-48 h-28 xl:h-48 m-10 xl:m-16 absolute bg-white -z-10 border-[6px] xl:border-8 left-4 xl:left-12 rotate-45 border-b-[#2C3A47] border-l-red-700 border-r-[#2C3A47] border-t-red-700"></div>
-          <h2 className="absolute left-28 xl:left-64 text-base xl:text-xl top-3 sm:top-1 xl:top-14 pl-6 xl:pl-20 text-red-700">
-            Ramendra Pradhananga
-          </h2>
-          <div
+<h2 className="absolute left-28 xl:left-64 text-xs sm:text-sm xl:text-lg top-2 sm:top-0 xl:top-12 pl-6 xl:pl-20 text-red-700 whitespace-nowrap tracking-tight">
+  Ramendra Pradhananga
+</h2>          <div
             className="absolute left-28 xl:left-64 top-1/2 bg-[#2C3A47] pr-2 xl:pr-10 pl-16 ml-2 xl:pl-20 w-72 xl:w-96 pt-1 -z-20 border-t-[5px] border-red-700"
             style={{ transform: "translateY(-100%)" }}
           >

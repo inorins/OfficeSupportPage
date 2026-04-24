@@ -1,11 +1,10 @@
 import Head from "next/head";
-import Link from "next/link";
-import Clients from "../components/Clients";
+import Clients from "../components/homepage/Clients";
 import { useEffect, useState } from "react";
-import About from "../components/About";
-import Services from "../components/Services";
-import Top from "../components/Top";
-import Features from "../components/Features";
+import About from "../components/homepage/About";
+import Services from "../components/homepage/Services";
+import Top from "../components/homepage/Top";
+import Features from "../components/homepage/Features";
 
 export default function Index(): JSX.Element {
   // const [email, setEmail] = useState("");

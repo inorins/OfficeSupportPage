@@ -1,5 +1,5 @@
 import React from "react";
-import { useAppContext } from "../context/state";
+import { useAppContext } from "../../context/state";
 
 export default function Footer(): JSX.Element {
   const { top } = useAppContext();
